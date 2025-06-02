@@ -52,4 +52,8 @@ jobs:
           aws ssm wait command-executed \
             --command-id ${{ env.COMMAND_ID }} \
             --instance-id ${{ env.INSTANCE_ID }} \
+<<<<<<< HEAD
             --region ap-south-1
+=======
+            --region ap-south-1
+>>>>>>> 952cc84 (Your commit message here)
