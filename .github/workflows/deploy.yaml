@@ -24,8 +24,7 @@ jobs:
         id: deploy_app
         run: |
           REGION="ap-south-1"
-          INSTANCE_NAME="FlaskAppEC2# Change this to your EC2 Name tag
-
+          INSTANCE_NAME="FlaskAppEC2"
           # Fetch instance ID based on Name tag
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=$INSTANCE_NAME" "Name=instance-state-name,Values=running" \
