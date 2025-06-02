@@ -1,4 +1,4 @@
-name: Deploy Flask app to EC2 via SSM
+name: Deploy Flask to EC2 via SSM
 
 on:
   push:
