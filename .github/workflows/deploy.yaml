@@ -9,48 +9,104 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-south-1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
 
+      - name: Send SSM Command to Deploy App
+        id: deploy_app
+        run: |
+          REGION="ap-south-1"
+          INSTANCE_NAME="name: Deploy Flask to EC2 via SSM
 
-    - name: Send SSM Command to Deploy App
-      id: deploy_app
-      run: |
-        REGION="ap-south-1"
-        INSTANCE_NAME="YourInstanceName" # Change this to your instance's Name tag
+on:
+  push:
+    branches:
+      - main
 
-        # Fetch instance ID based on Name tag
-        INSTANCE_ID=$(aws ec2 describe-instances \
-          --filters "Name=tag:Name,Values=$INSTANCE_NAME" "Name=instance-state-name,Values=running" \
-          --region "$REGION" \
-          --query "Reservations[].Instances[].InstanceId" \
-          --output text)
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-        echo "Using instance ID: $INSTANCE_ID"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-        # Run SSM command
-        COMMAND_ID=$(aws ssm send-command \
-          --document-name "AWS-RunShellScript" \
-          --targets "Key=instanceIds,Values=$INSTANCE_ID" \
-          --parameters '{"commands":["sudo rm -rf app", "sudo yum update -y python3 git", "pip3 install flask", "sudo git clone https://github.com/amartyam12/Assignment.git app", "cd app && git pull origin main", "pkill -f \"python3 main.py\" || true", "nohup python3 main.py --host=0.0.0.0 --port=5000 > flask.log 2>&1 &"]}' \
-          --comment "Deploy Flask app" \
-          --region "$REGION" \
-          --query "Command.CommandId" \
-          --output text)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
 
-        echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+      - name: Send SSM Command to Deploy App
+        id: deploy_app
+        run: |
+          REGION="ap-south-1"
+          INSTANCE_NAME="FlaskAppEC"
 
-    - name: Wait for SSM command to complete
-      run: |
-        aws ssm wait command-executed \
-          --command-id "$COMMAND_ID" \
-          --instance-id i-055492fbb110fd0c8 \
-          --region ap-south-1
+          # Fetch instance ID based on Name tag
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$INSTANCE_NAME" "Name=instance-state-name,Values=running" \
+            --region "$REGION" \
+            --query "Reservations[].Instances[].InstanceId" \
+            --output text)
+
+          echo "Using instance ID: $INSTANCE_ID"
+          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+
+          # Run SSM command to deploy Flask app
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=instanceIds,Values=$INSTANCE_ID" \
+            --parameters '{"commands":["sudo rm -rf app", "sudo yum update -y python3 git", "pip3 install flask", "sudo git clone https://github.com/amartyam12/Assignment.git app", "cd app && git pull origin main", "pkill -f \"python3 main.py\" || true", "nohup python3 main.py --host=0.0.0.0 --port=5000 > flask.log 2>&1 &"]}' \
+            --comment "Deploy Flask app" \
+            --region "$REGION" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+
+      - name: Wait for SSM command to complete
+        run: |
+          aws ssm wait command-executed \
+            --command-id ${{ env.COMMAND_ID }} \
+            --instance-id ${{ env.INSTANCE_ID }} \
+            --region ap-south-1
+"  # Change this to your EC2 Name tag
+
+          # Fetch instance ID based on Name tag
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$INSTANCE_NAME" "Name=instance-state-name,Values=running" \
+            --region "$REGION" \
+            --query "Reservations[].Instances[].InstanceId" \
+            --output text)
+
+          echo "Using instance ID: $INSTANCE_ID"
+          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+
+          # Run SSM command to deploy Flask app
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=instanceIds,Values=$INSTANCE_ID" \
+            --parameters '{"commands":["sudo rm -rf app", "sudo yum update -y python3 git", "pip3 install flask", "sudo git clone https://github.com/amartyam12/Assignment.git app", "cd app && git pull origin main", "pkill -f \"python3 main.py\" || true", "nohup python3 main.py --host=0.0.0.0 --port=5000 > flask.log 2>&1 &"]}' \
+            --comment "Deploy Flask app" \
+            --region "$REGION" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+
+      - name: Wait for SSM command to complete
+        run: |
+          aws ssm wait command-executed \
+            --command-id ${{ env.COMMAND_ID }} \
+            --instance-id ${{ env.INSTANCE_ID }} \
+            --region ap-south-1
