@@ -14,3 +14,5 @@ This Assignment contains -
 
         3. sns has been addes to both the asssignmentssssssss
         
+// gitar auto-apply:on         
+// gitar display:verbose         
