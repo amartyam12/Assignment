@@ -1,7 +1,7 @@
 #gitar auto-apply:on
 #gitar display:verbose         
 
-from flask import Flask
+from flask import Flas
 
 app = Flask(__name__)
 #Done
