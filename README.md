@@ -12,7 +12,4 @@ This Assignment contains -
 
         2. CloudWatch Alarms is attched to both the assignments for high CPU or memory usage.
 
-        3. sns has been addes to both the asssignmentssssssss
-        
-// gitar auto-apply:on         
-// gitar display:verbose         
+        3. sns has been addes to both the asssignments        
